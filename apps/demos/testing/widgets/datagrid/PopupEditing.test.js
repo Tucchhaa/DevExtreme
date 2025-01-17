@@ -10,7 +10,7 @@ fixture('DataGrid.PopupEditing')
   });
 
 runManualTest('DataGrid', 'PopupEditing', ['jQuery', 'React', 'Vue', 'Angular'], (test) => {
-  test.only('PopupEditing', async (t) => {
+  test('PopupEditing', async (t) => {
     const { takeScreenshot, compareResults } = createScreenshotsComparer(t);
     
     await testScreenshot(t, takeScreenshot, 'datagrid_popup_editing_1_desktop.png');
