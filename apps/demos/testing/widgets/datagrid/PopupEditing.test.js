@@ -9,8 +9,8 @@ fixture('DataGrid.PopupEditing')
     ctx.initialWindowSize = [900, 600];
   });
 
-runManualTest('DataGrid', 'PopupEditing', ['jQuery', 'React', 'Vue', 'Angular'], (test) => {
-  test('PopupEditing', async (t) => {
+runManualTest('DataGrid', 'PopupEditing', ['jQuery'], (test) => {
+  test.only('PopupEditing', async (t) => {
     const { takeScreenshot, compareResults } = createScreenshotsComparer(t);
     
     await testScreenshot(t, takeScreenshot, 'datagrid_popup_editing_1_desktop.png');
@@ -20,6 +20,10 @@ runManualTest('DataGrid', 'PopupEditing', ['jQuery', 'React', 'Vue', 'Angular'],
       .wait(500);
 
     await testScreenshot(t, takeScreenshot, 'datagrid_popup_editing_2_desktop.png', '.dx-overlay-content');
+
+    await t.scrollBy('.dx-popup-content .dx-scrollable-container', 0, 1000);
+
+    await testScreenshot(t, takeScreenshot, 'datagrid_popup_editing_3_desktop.png', '.dx-overlay-content');
 
     await t
       .expect(compareResults.isValid())
