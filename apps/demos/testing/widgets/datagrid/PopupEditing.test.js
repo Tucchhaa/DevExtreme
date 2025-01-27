@@ -19,7 +19,7 @@ runManualTest('DataGrid', 'PopupEditing', ['jQuery', 'React', 'Vue', 'Angular'],
       .click($('.dx-link-edit').nth(0))
       .wait(500);
 
-    await testScreenshot(t, takeScreenshot, 'datagrid_popup_editing_2_desktop.png');
+    await testScreenshot(t, takeScreenshot, 'datagrid_popup_editing_2_desktop.png', '.dx-overlay-content');
 
     await t
       .expect(compareResults.isValid())
