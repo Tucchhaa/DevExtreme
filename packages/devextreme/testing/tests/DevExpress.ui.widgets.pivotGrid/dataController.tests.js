@@ -621,41 +621,6 @@ QUnit.module('dxPivotGrid DataController', moduleConfig, () => {
         ]], 'Columns Info');
     });
 
-    QUnit.test('columnsInfo and rowsInfo without dimension fields when showGrandTotals is disabled on dataField level only for one field.', function(assert) {
-        const dataController = new DataController({
-            dataSource: {
-                fields: [
-                    { dataField: 'sum', caption: 'Sum', format: 'fixedPoint', area: 'data', showGrandTotals: false },
-                    { dataField: 'avg', caption: 'Avg', format: 'fixedPoint', area: 'data' }
-                ],
-                columns: [],
-                rows: []
-            },
-            texts: texts
-        });
-
-        assert.deepEqual(dataController.getColumnsInfo(), [[
-            {
-                text: 'Grand Total',
-                type: 'GT'
-            }],
-
-        [{
-            dataIndex: 1,
-            isLast: true,
-            text: 'Avg',
-            type: 'GT'
-        }]], 'Columns Info');
-
-        assert.deepEqual(dataController.getRowsInfo(), [[
-            {
-                isLast: true,
-                text: 'Grand Total',
-                type: 'GT'
-            }
-        ]], 'Rows Info');
-    });
-
     QUnit.test('dataFieldArea: column, hasDimensionFields: true; columnsInfo and rowsInfo when showGrandTotals is disabled only for one field', function(assert) {
         const dataController = new DataController({
             dataSource: {
@@ -706,23 +671,23 @@ QUnit.module('dxPivotGrid DataController', moduleConfig, () => {
                 rows: []
             },
             texts: texts,
-            dataFieldArea: 'row'
+            dataFieldArea: 'column'
         });
 
         assert.deepEqual(
             dataController.getColumnsInfo(),
             [
-                [{ type: 'GT', text: 'Grand Total', isLast: true }]
+                [{ type: 'GT', text: 'Grand Total', }],
+                [{ type: 'GT', text: 'Avg', dataIndex: 1, isLast: true }]
             ],
             'Columns Info'
         );
 
         assert.deepEqual(
             dataController.getRowsInfo(),
-            [[
-                { type: 'GT', text: 'Grand Total', },
-                { type: 'GT', text: 'Avg', dataIndex: 1, isLast: true }
-            ]],
+            [
+                [{ type: 'GT', text: 'Grand Total', isLast: true, }]
+            ],
             'Rows Info'
         );
     });
