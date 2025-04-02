@@ -30,7 +30,9 @@ export class ColumnChooserView extends View<ColumnChooserProps> {
 
   public readonly treeViewRef = createRef<dxTreeView>();
 
-  private readonly mode: SubsGets<ColumnChooserMode>;
+  public readonly mode: SubsGets<ColumnChooserMode>;
+
+  public dragModeOpened: SubsGets<boolean>;
 
   public static dependencies = [
     ToolbarController, ColumnChooserController, OptionsController,
@@ -44,6 +46,11 @@ export class ColumnChooserView extends View<ColumnChooserProps> {
     super();
 
     this.mode = this.options.oneWay('columnChooser.mode');
+
+    this.dragModeOpened = computed(
+      (opened, mode) => opened && mode === 'dragAndDrop',
+      [this.popupVisible, this.mode],
+    );
 
     this.toolbarController.addDefaultItem(
       {
@@ -83,6 +90,9 @@ export class ColumnChooserView extends View<ColumnChooserProps> {
       visible: this.popupVisible,
       mode: this.mode,
       title: this.options.oneWay('columnChooser.title'),
+      chooserColumns: this.columnChooserController.chooserColumns,
+
+      onMove: this.columnChooserController.onMove,
 
       popupConfig: combined({
         width: this.options.oneWay('columnChooser.width'),
@@ -111,6 +121,8 @@ export class ColumnChooserView extends View<ColumnChooserProps> {
         searchEditorOptions: this.options.oneWay('columnChooser.search.editorOptions'),
         searchEnabled: this.options.oneWay('columnChooser.search.enabled'),
         searchTimeout: this.options.oneWay('columnChooser.search.timeout'),
+
+        items: this.columnChooserController.items,
       } as MapMaybeSubscribable<TreeViewProperties>),
 
       treeViewSelectModeConfig: this.getSelectModeConfig(),
@@ -122,7 +134,6 @@ export class ColumnChooserView extends View<ColumnChooserProps> {
     const controller = this.columnChooserController;
 
     return combined({
-      items: controller.items,
       showCheckBoxesMode: computed(
         (v) => (v ? 'selectAll' : 'normal'),
         [this.options.oneWay('columnChooser.selection.allowSelectAll')],
@@ -133,6 +144,10 @@ export class ColumnChooserView extends View<ColumnChooserProps> {
   }
 
   private getDragAndDropModeConfig(): SubsGets<TreeViewProperties> {
-    return combined({});
+    return combined({
+      noDataText: this.options.oneWay('columnChooser.emptyPanelText'),
+      activeStateEnabled: false,
+      hoverStateEnabled: false,
+    });
   }
 }

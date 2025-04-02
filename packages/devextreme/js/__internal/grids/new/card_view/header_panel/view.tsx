@@ -5,6 +5,7 @@ import { ColumnsController } from '@ts/grids/new/grid_core/columns_controller/co
 import { View } from '@ts/grids/new/grid_core/core/view';
 import { HeaderFilterController } from '@ts/grids/new/grid_core/filtering/header_filter/index';
 
+import { ColumnChooserView } from '../../grid_core/column_chooser';
 import type { Column } from '../../grid_core/columns_controller/types';
 import { SortingController } from '../../grid_core/sorting_controller/sorting_controller';
 import { ContextMenuController } from '../context_menu/controller';
@@ -21,6 +22,7 @@ export class HeaderPanelView extends View<HeaderPanelProps> {
     OptionsController,
     HeaderFilterController,
     ContextMenuController,
+    ColumnChooserView,
   ] as const;
 
   constructor(
@@ -29,19 +31,21 @@ export class HeaderPanelView extends View<HeaderPanelProps> {
     private readonly options: OptionsController,
     private readonly headerFilterController: HeaderFilterController,
     private readonly contextMenuController: ContextMenuController,
+    private readonly columnChooserView: ColumnChooserView,
   ) {
     super();
   }
 
   protected override getProps(): SubsGets<HeaderPanelProps> {
     return combined({
-      columns: computed(
+      visibleColumns: computed(
         (columns) => [...columns].sort((a, b) => a.visibleIndex - b.visibleIndex),
-        [this.columnsController.columns],
+        [this.columnsController.visibleColumns],
       ),
       onMove: this.onMove.bind(this),
       onRemove: this.onRemove.bind(this),
       allowColumnReordering: this.columnsController.allowColumnReordering,
+      columnChooserDragModeOpened: this.columnChooserView.dragModeOpened,
       showSortIndexes: this.sortingController.showSortIndexes,
       onSortClick: this.onSortClick.bind(this),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,8 +64,15 @@ export class HeaderPanelView extends View<HeaderPanelProps> {
   }
 
   public onMove(column: Column, toIndex: number): void {
+    const visibleColumns = this.columnsController.visibleColumns.unreactive_get();
+    const needPreserveOrder = !column.allowReordering;
+
+    const visibleIndex = needPreserveOrder
+      ? column.visibleIndex
+      : visibleColumns[toIndex].visibleIndex;
+
     this.columnsController.columnOption(column, 'visible', true);
-    this.columnsController.columnOption(column, 'visibleIndex', toIndex);
+    this.columnsController.columnOption(column, 'visibleIndex', visibleIndex);
   }
 
   public onSortClick(column: Column, e: MouseEvent): void {

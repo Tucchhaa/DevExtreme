@@ -7,6 +7,7 @@
 @use '../../base/cardView/content_view/content/card/cover/variables' as *;
 @use '../../base/cardView/content_view/content/card/content/variables' as *;
 @use '../../base/cardView/content_view/content/variables' as *;
+@use '../../base/cardView/column_chooser/variables' as *;
 
 // adduse
 $cardview-background-color: $base-typography-bg !default;
@@ -29,3 +30,5 @@ $cardview-card-cover-noimage-background-color: #E0E0E0 !default;
 $cardview-card-cover-noimage-icon-color: #B3B3B3 !default;
 
 $cardview-card-selection-background-color: #EBF3FC;
+
+$cardview-columnchooser-message-color: lighten($base-text-color, 26%) !default;

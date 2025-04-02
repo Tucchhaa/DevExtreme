@@ -1,0 +1,14 @@
+@use './variables' as *;
+
+.dx-cardview-column-chooser-list {
+  .dx-empty-message {
+    text-align: center;
+    left: 0;
+    right: 0;
+    bottom: 50%;
+    position: absolute;
+
+    color: $cardview-columnchooser-message-color;
+    padding: 0 $cardview-column-chooser-horizontal-padding;
+  }
+}

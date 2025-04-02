@@ -127,12 +127,13 @@ export class ColumnsController {
   ): PreNormalizedColumn[] {
     const result = [...columns];
 
-    const visibleIndexes = normalizeVisibleIndexes(columns.map((c) => c.visibleIndex), forceIndex);
+    const visibleIndexes = normalizeVisibleIndexes(
+      columns.map((c) => c.visibleIndex),
+      forceIndex,
+    );
 
     visibleIndexes.forEach((visibleIndex, i) => {
-      if (columns[i].visibleIndex !== visibleIndex) {
-        result[i].visibleIndex = visibleIndex;
-      }
+      result[i].visibleIndex = visibleIndex;
     });
 
     return result;

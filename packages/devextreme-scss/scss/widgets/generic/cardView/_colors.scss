@@ -6,6 +6,7 @@
 @use '../../base/cardView/content_view/content/card/header/variables' as *;
 @use '../../base/cardView/content_view/content/card/content/variables' as *;
 @use '../../base/cardView/content_view/content/variables' as *;
+@use '../../base/cardView/column_chooser/variables' as *;
 
 // adduse
 
@@ -21,3 +22,5 @@ $cardview-card-background-color: $base-bg !default;
 
 $cardview-card-content-field-value-highlight-color: $base-inverted-text-color !default;
 $cardview-card-content-field-value-highlight-background: $base-accent !default;
+
+$cardview-columnchooser-message-color: lighten($base-text-color, 26%) !default;

@@ -13,11 +13,13 @@ export const CLASSES = {
 };
 
 export interface HeaderPanelProps {
-  columns: Column[];
+  visibleColumns: Column[];
 
   onMove: (column: Column, toIndex: number) => void;
 
   allowColumnReordering: boolean;
+
+  columnChooserDragModeOpened: boolean;
 
   showSortIndexes: boolean;
 
@@ -54,8 +56,9 @@ export class HeaderPanel extends Component<HeaderPanelProps> {
         <ColumnSortable
           {...this.props.draggingOptions}
           allowColumnReordering={this.props.allowColumnReordering}
+          columnChooserDragModeOpened={this.props.columnChooserDragModeOpened}
           source="header-panel-main"
-          visibleColumns={this.props.columns}
+          visibleColumns={this.props.visibleColumns}
           itemOrientation="horizontal"
           onMove={(column, index): void => this.props.onMove?.(column, index)}
           filter={`.${itemClasses.item}`}
@@ -68,7 +71,7 @@ export class HeaderPanel extends Component<HeaderPanelProps> {
             scrollByContent={true}
           >
             <div className={CLASSES.content}>
-              {this.props.columns.map((column, index) => (
+              {this.props.visibleColumns.map((column, index) => (
                 <Item
                   showSortIndexes={this.props.showSortIndexes}
                   column={column}
