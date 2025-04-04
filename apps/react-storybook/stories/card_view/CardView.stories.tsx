@@ -164,6 +164,9 @@ const meta: Meta<typeof CardView> = {
     searchPanel: {
       control: 'object',
     },
+    columnChooser: {
+      control: 'object',
+    }
   }
 };
 
@@ -331,3 +334,100 @@ export const ContextMenuStory: Story = {
     }
   }
 }
+export const ColumnChooserSelectModeStory: Story = {
+  ...DefaultMode,
+  name: 'column chooser \'select\' mode',
+  args: {
+    ...DefaultMode.args,
+    columnChooser: {
+      enabled: true,
+      mode: 'select',
+      title: 'Column chooser',
+      sortOrder: undefined,
+      selection: {
+        allowSelectAll: true,
+        selectByClick: true,
+      },
+      search: {
+        enabled: true,
+        timeout: 0,
+        editorOptions: {
+          placeholder: 'search columns',
+        }
+      },
+      height: 300,
+    },
+    columns: [
+      {
+        dataField: 'id',
+        allowReordering: false,
+      },
+      {
+        dataField: 'firstName',
+        allowReordering: false,
+        allowHiding: false,
+      },
+      {
+        dataField: 'lastName',
+        showInColumnChooser: false,
+        allowHiding: false,
+      },
+      {
+        dataField: "email",
+        visible: false,
+      },
+      {
+        dataField: "gender",
+      },
+      {
+        dataField: "birthDate",
+      },      
+    ]
+  },
+}
+
+export const ColumnChooserDragAndDropModeStory: Story = {
+  ...DefaultMode,
+  name: 'column chooser \'dragAndDrop\' mode',
+  argTypes: {
+    columns: {
+      control: 'object',
+    }
+  },
+  args: {
+    ...DefaultMode.args,
+    allowColumnReordering: true,
+    columnChooser: {
+      enabled: true,
+      mode: 'dragAndDrop',
+      emptyPanelText: 'Drop a column here',
+    },
+    columns: [
+      {
+        dataField: 'id',
+        allowReordering: false,
+      },
+      {
+        dataField: 'firstName',
+        allowReordering: false,
+        allowHiding: false,
+      },
+      {
+        dataField: 'lastName',
+        showInColumnChooser: false,
+        allowHiding: false,
+      },
+      {
+        dataField: "email",
+        visible: false,
+      },
+      {
+        dataField: "gender",
+      },
+      {
+        dataField: "birthDate",
+      },      
+    ]
+  }
+}
+
