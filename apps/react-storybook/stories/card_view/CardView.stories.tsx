@@ -336,7 +336,7 @@ export const ContextMenuStory: Story = {
 }
 export const ColumnChooserSelectModeStory: Story = {
   ...DefaultMode,
-  name: 'column chooser \'select\' mode',
+  name: 'Column chooser \'select\' mode',
   args: {
     ...DefaultMode.args,
     columnChooser: {
@@ -388,7 +388,7 @@ export const ColumnChooserSelectModeStory: Story = {
 
 export const ColumnChooserDragAndDropModeStory: Story = {
   ...DefaultMode,
-  name: 'column chooser \'dragAndDrop\' mode',
+  name: 'Column chooser \'dragAndDrop\' mode',
   argTypes: {
     columns: {
       control: 'object',
