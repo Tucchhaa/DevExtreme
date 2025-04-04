@@ -3,6 +3,7 @@ import { Scrollable } from '@ts/grids/new/grid_core/inferno_wrappers/scrollable'
 import type { ComponentType } from 'inferno';
 import { Component } from 'inferno';
 
+import type { Source as ColumnSortableSource } from './column_sortable';
 import { ColumnSortable } from './column_sortable';
 import { CLASSES as itemClasses, Item } from './item';
 import type { DraggingOptions } from './options';
@@ -15,7 +16,7 @@ export const CLASSES = {
 export interface HeaderPanelProps {
   visibleColumns: Column[];
 
-  onMove: (column: Column, toIndex: number) => void;
+  onMove: (column: Column, toIndex: number, source: ColumnSortableSource) => void;
 
   allowColumnReordering: boolean;
 
@@ -60,7 +61,7 @@ export class HeaderPanel extends Component<HeaderPanelProps> {
           source="header-panel-main"
           visibleColumns={this.props.visibleColumns}
           itemOrientation="horizontal"
-          onMove={(column, index): void => this.props.onMove?.(column, index)}
+          onMove={(column, index, source): void => this.props.onMove?.(column, index, source)}
           filter={`.${itemClasses.item}`}
           dragTemplate={Item}
         >

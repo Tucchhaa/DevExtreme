@@ -28,6 +28,7 @@ export interface Props extends Omit<SortableProps, 'onAdd' | 'onReorder' | 'drag
 interface ItemData {
   column: Column;
   status: Status;
+  source: Source;
 }
 
 const ALLOWED_DRAGGING_DISTANCE = 64;
@@ -44,7 +45,11 @@ export class ColumnSortable extends Component<Props> {
       return;
     }
 
-    e.itemData = { column, status: 'moving' } as ItemData;
+    e.itemData = {
+      column,
+      status: 'moving',
+      source: this.props.source,
+    } as ItemData;
   };
 
   private readonly onDragMove = (e: SortableTypes.DragMoveEvent): void => {

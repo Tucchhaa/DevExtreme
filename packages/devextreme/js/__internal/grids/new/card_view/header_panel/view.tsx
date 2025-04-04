@@ -10,6 +10,7 @@ import type { Column } from '../../grid_core/columns_controller/types';
 import { SortingController } from '../../grid_core/sorting_controller/sorting_controller';
 import { ContextMenuController } from '../context_menu/controller';
 import { OptionsController } from '../options_controller';
+import type { Source as ColumnSortableSource } from './column_sortable';
 import type { HeaderPanelProps } from './header_panel';
 import { HeaderPanel } from './header_panel';
 
@@ -63,16 +64,61 @@ export class HeaderPanelView extends View<HeaderPanelProps> {
     this.columnsController.columnOption(column, 'visible', false);
   }
 
-  public onMove(column: Column, toIndex: number): void {
+  public onMove(movedColumn: Column, toIndex: number, source: ColumnSortableSource): void {
     const visibleColumns = this.columnsController.visibleColumns.unreactive_get();
-    const needPreserveOrder = !column.allowReordering;
 
-    const visibleIndex = needPreserveOrder
-      ? column.visibleIndex
-      : visibleColumns[toIndex].visibleIndex;
+    const getColumnAfter = (): Column | undefined => {
+      if (source === 'header-panel-main' && toIndex < visibleColumns.length - 1) {
+        const index = visibleColumns.findIndex((visibleColumn) => visibleColumn === movedColumn);
+        const isMovingLeft = toIndex < index;
 
-    this.columnsController.columnOption(column, 'visible', true);
-    this.columnsController.columnOption(column, 'visibleIndex', visibleIndex);
+        return isMovingLeft
+          ? visibleColumns[toIndex]
+          : visibleColumns[toIndex + 1];
+      }
+
+      if (source === 'column-chooser' && toIndex < visibleColumns.length) {
+        return visibleColumns[toIndex];
+      }
+
+      return undefined;
+    };
+
+    const needPreserveOrder = !movedColumn.allowReordering;
+    const columnAfter = getColumnAfter();
+
+    if (needPreserveOrder) {
+      this.columnsController.columnOption(movedColumn, 'visible', true);
+      return;
+    }
+
+    if (columnAfter === undefined) {
+      const columnsCount = this.columnsController.columns.unreactive_get().length;
+
+      this.columnsController.columnOption(movedColumn, 'visible', true);
+      this.columnsController.columnOption(movedColumn, 'visibleIndex', columnsCount);
+
+      return;
+    }
+
+    this.columnsController.updateColumns((columns) => {
+      const newColumns = [...columns];
+
+      newColumns.forEach((column, index) => {
+        const updatedColumn = { ...column };
+
+        if (column.name === movedColumn.name) {
+          updatedColumn.visibleIndex = columnAfter.visibleIndex;
+          updatedColumn.visible = true;
+        } else if (column.visibleIndex >= columnAfter.visibleIndex) {
+          updatedColumn.visibleIndex = column.visibleIndex + 1;
+        }
+
+        newColumns[index] = updatedColumn;
+      });
+
+      return newColumns;
+    });
   }
 
   public onSortClick(column: Column, e: MouseEvent): void {
