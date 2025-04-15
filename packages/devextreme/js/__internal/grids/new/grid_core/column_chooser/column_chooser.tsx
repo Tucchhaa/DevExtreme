@@ -1,7 +1,9 @@
 import type { ColumnChooserMode } from '@js/common/grids';
 import $ from '@js/core/renderer';
 import messageLocalization from '@js/localization/message';
-import type { Properties as PopupProperties, ShownEvent, ToolbarItem } from '@js/ui/popup';
+import type {
+  Properties as PopupProperties, ShowingEvent, ToolbarItem,
+} from '@js/ui/popup';
 import type dxPopup from '@js/ui/popup';
 import { current, isGeneric, isMaterial } from '@js/ui/themes';
 import type { Properties as TreeViewProperties } from '@js/ui/tree_view';
@@ -12,7 +14,7 @@ import {
 
 import { ColumnSortable } from '../../card_view/header_panel/column_sortable';
 import { Item } from '../../card_view/header_panel/item';
-import type { Column } from '../columns_controller/types';
+import type { Column, VisibleColumn } from '../columns_controller/types';
 import { Popup } from '../inferno_wrappers/popup';
 import { TreeView } from '../inferno_wrappers/tree_view';
 
@@ -40,7 +42,9 @@ export interface ColumnChooserProps {
 
   chooserColumns: Column[];
 
-  onMove: (column: Column) => void;
+  visibleColumns: VisibleColumn[];
+
+  onColumnMove: (column: Column) => void;
 
   popupConfig: PopupProperties;
 
@@ -81,16 +85,17 @@ export class ColumnChooser extends Component<ColumnChooserProps> {
         rtlEnabled={popupConfig.rtlEnabled}
         position={popupConfig.position}
         onHidden={popupConfig.onHidden}
-        onShowing={(e: ShownEvent) => { this.setPopupAttributes(e?.component); }}
+        onShowing={this.onShowing}
       >
         <ColumnSortable
           height='100%'
           source='column-chooser'
-          filter={`.${CLASS.item}, .dx-cardview-header-item`}
-          visibleColumns={this.props.chooserColumns}
-          allowColumnReordering={!this.isSelectMode()}
-          dragTemplate={Item}
-          onMove={this.props.onMove}
+          filter={`.${CLASS.item}.dx-cardview-header-item`}
+          getColumnByIndex={this.getColumnByIndex}
+          visibleColumns={this.props.visibleColumns}
+          allowDragging={!this.isSelectMode()}
+          columnDragTemplate={Item}
+          onColumnMove={this.props.onColumnMove}
           // @ts-expect-error
           onPlaceholderPrepared={this.onSortablePlaceholderPrepared}
         >
@@ -136,6 +141,24 @@ export class ColumnChooser extends Component<ColumnChooserProps> {
     return [this.addWidgetPrefix(CLASS.root), this.addWidgetPrefix(modeSpecificClass)].join(' ');
   }
 
+  private readonly onShowing = (e: ShowingEvent): void => {
+    const popup = e.component;
+
+    if (this.props.popupConfig.position === undefined) {
+      popup.option('position', {
+        my: 'right bottom',
+        at: 'right bottom',
+        // TODO: replace with content view element
+        of: '.dx-gridcore-contentview',
+        collision: 'fit',
+        offset: '-2 -2',
+        boundaryOffset: '2 2',
+      });
+    }
+
+    this.setPopupAttributes(popup);
+  };
+
   private setPopupAttributes(popup: dxPopup): void {
     // TODO: band columns aren't yet implemented in cardview
     const isBandColumnsUsed = false;
@@ -164,7 +187,7 @@ export class ColumnChooser extends Component<ColumnChooserProps> {
     const itemTemplate = this.isSelectMode()
       ? 'item'
       : (item, index, $element): void => {
-        render(<Item column={item.column}></Item>, $($element).get(0));
+        render(<Item column={item.column} cssClass={CLASS.item}></Item>, $($element).get(0));
       };
 
     return (
@@ -195,6 +218,15 @@ export class ColumnChooser extends Component<ColumnChooserProps> {
       ></TreeView>
     );
   }
+
+  private readonly getColumnByIndex = (index: number): Column => {
+    const treeView = this.props.treeViewRef.current;
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const column = treeView!.getNodes()[index].itemData!.column as Column;
+
+    return column;
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly onSortablePlaceholderPrepared = (e: any): void => {

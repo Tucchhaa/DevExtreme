@@ -11,7 +11,7 @@ import {
 } from '@ts/core/reactive/index';
 import { createRef } from 'inferno';
 
-import { CLASSES as ContentViewClasses } from '../content_view/content_view';
+import { ColumnsController } from '../columns_controller';
 import { View } from '../core/view';
 import { OptionsController } from '../options_controller/options_controller';
 import { ToolbarController } from '../toolbar/controller';
@@ -35,12 +35,13 @@ export class ColumnChooserView extends View<ColumnChooserProps> {
   public dragModeOpened: SubsGets<boolean>;
 
   public static dependencies = [
-    ToolbarController, ColumnChooserController, OptionsController,
+    ToolbarController, ColumnChooserController, ColumnsController, OptionsController,
   ] as const;
 
   constructor(
     private readonly toolbarController: ToolbarController,
     private readonly columnChooserController: ColumnChooserController,
+    private readonly columnsController: ColumnsController,
     private readonly options: OptionsController,
   ) {
     super();
@@ -91,8 +92,9 @@ export class ColumnChooserView extends View<ColumnChooserProps> {
       mode: this.mode,
       title: this.options.oneWay('columnChooser.title'),
       chooserColumns: this.columnChooserController.chooserColumns,
+      visibleColumns: this.columnsController.visibleColumns,
 
-      onMove: this.columnChooserController.onMove,
+      onColumnMove: this.columnChooserController.onColumnMove,
 
       popupConfig: combined({
         width: this.options.oneWay('columnChooser.width'),
@@ -100,17 +102,7 @@ export class ColumnChooserView extends View<ColumnChooserProps> {
         container: this.options.oneWay('columnChooser.container'),
         rtlEnabled: this.options.oneWay('rtlEnabled'),
 
-        position: computed(
-          (v) => v ?? {
-            my: 'right bottom',
-            at: 'right bottom',
-            of: ContentViewClasses.contentView,
-            collision: 'fit',
-            offset: '-2 -2',
-            boundaryOffset: '2 2',
-          },
-          [this.options.oneWay('columnChooser.position')],
-        ),
+        position: this.options.oneWay('columnChooser.position'),
 
         onHidden: () => { this.popupVisible.update(false); },
       } as MapMaybeSubscribable<PopupProperties>),

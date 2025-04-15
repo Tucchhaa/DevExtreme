@@ -1,9 +1,9 @@
-import type { Column } from '@ts/grids/new/grid_core/columns_controller/types';
+import type { Column, VisibleColumn } from '@ts/grids/new/grid_core/columns_controller/types';
 import { Scrollable } from '@ts/grids/new/grid_core/inferno_wrappers/scrollable';
 import type { ComponentType } from 'inferno';
 import { Component } from 'inferno';
 
-import type { Source as ColumnSortableSource } from './column_sortable';
+import type { DraggingColumnData } from './column_sortable';
 import { ColumnSortable } from './column_sortable';
 import { CLASSES as itemClasses, Item } from './item';
 import type { DraggingOptions } from './options';
@@ -14,9 +14,9 @@ export const CLASSES = {
 };
 
 export interface HeaderPanelProps {
-  visibleColumns: Column[];
+  visibleColumns: VisibleColumn[];
 
-  onMove: (column: Column, toIndex: number, source: ColumnSortableSource) => void;
+  onColumnMove: (column: Column, toIndex: number, draggingData: DraggingColumnData) => void;
 
   allowColumnReordering: boolean;
 
@@ -56,14 +56,15 @@ export class HeaderPanel extends Component<HeaderPanelProps> {
       >
         <ColumnSortable
           {...this.props.draggingOptions}
-          allowColumnReordering={this.props.allowColumnReordering}
-          columnChooserDragModeOpened={this.props.columnChooserDragModeOpened}
           source="header-panel-main"
           visibleColumns={this.props.visibleColumns}
+          getColumnByIndex={(index) => this.props.visibleColumns[index]}
+          allowDragging={this.props.allowColumnReordering}
+          columnChooserDragModeOpened={this.props.columnChooserDragModeOpened}
+          onColumnMove={this.props.onColumnMove}
+          columnDragTemplate={Item}
           itemOrientation="horizontal"
-          onMove={(column, index, source): void => this.props.onMove?.(column, index, source)}
           filter={`.${itemClasses.item}`}
-          dragTemplate={Item}
         >
           <Scrollable
             direction='horizontal'

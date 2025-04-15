@@ -71,7 +71,7 @@ export class ColumnChooserController {
     });
   }
 
-  public onMove = (column: Column): void => {
+  public onColumnMove = (column: Column): void => {
     this.columnsController.columnOption(column, 'visible', false);
   };
 }

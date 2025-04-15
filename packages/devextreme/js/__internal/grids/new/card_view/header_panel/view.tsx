@@ -10,7 +10,7 @@ import type { Column } from '../../grid_core/columns_controller/types';
 import { SortingController } from '../../grid_core/sorting_controller/sorting_controller';
 import { ContextMenuController } from '../context_menu/controller';
 import { OptionsController } from '../options_controller';
-import type { Source as ColumnSortableSource } from './column_sortable';
+import type { DraggingColumnData } from './column_sortable';
 import type { HeaderPanelProps } from './header_panel';
 import { HeaderPanel } from './header_panel';
 
@@ -43,8 +43,7 @@ export class HeaderPanelView extends View<HeaderPanelProps> {
         (columns) => [...columns].sort((a, b) => a.visibleIndex - b.visibleIndex),
         [this.columnsController.visibleColumns],
       ),
-      onMove: this.onMove.bind(this),
-      onRemove: this.onRemove.bind(this),
+      onColumnMove: this.onColumnMove.bind(this),
       allowColumnReordering: this.columnsController.allowColumnReordering,
       columnChooserDragModeOpened: this.columnChooserView.dragModeOpened,
       showSortIndexes: this.sortingController.showSortIndexes,
@@ -60,43 +59,24 @@ export class HeaderPanelView extends View<HeaderPanelProps> {
     });
   }
 
-  public onRemove(column: Column): void {
-    this.columnsController.columnOption(column, 'visible', false);
-  }
-
-  public onMove(movedColumn: Column, toIndex: number, source: ColumnSortableSource): void {
-    const visibleColumns = this.columnsController.visibleColumns.unreactive_get();
-
-    const getColumnAfter = (): Column | undefined => {
-      if (source === 'header-panel-main' && toIndex < visibleColumns.length - 1) {
-        const index = visibleColumns.findIndex((visibleColumn) => visibleColumn === movedColumn);
-        const isMovingLeft = toIndex < index;
-
-        return isMovingLeft
-          ? visibleColumns[toIndex]
-          : visibleColumns[toIndex + 1];
-      }
-
-      if (source === 'column-chooser' && toIndex < visibleColumns.length) {
-        return visibleColumns[toIndex];
-      }
-
-      return undefined;
-    };
-
-    const needPreserveOrder = !movedColumn.allowReordering;
-    const columnAfter = getColumnAfter();
+  public onColumnMove(
+    column: Column,
+    toIndex: number,
+    draggingColumnData: DraggingColumnData,
+  ): void {
+    const { columnAfter } = draggingColumnData;
+    const needPreserveOrder = !column.allowReordering;
 
     if (needPreserveOrder) {
-      this.columnsController.columnOption(movedColumn, 'visible', true);
+      this.columnsController.columnOption(column, 'visible', true);
       return;
     }
 
     if (columnAfter === undefined) {
       const columnsCount = this.columnsController.columns.unreactive_get().length;
 
-      this.columnsController.columnOption(movedColumn, 'visible', true);
-      this.columnsController.columnOption(movedColumn, 'visibleIndex', columnsCount);
+      this.columnsController.columnOption(column, 'visible', true);
+      this.columnsController.columnOption(column, 'visibleIndex', columnsCount);
 
       return;
     }
@@ -104,14 +84,14 @@ export class HeaderPanelView extends View<HeaderPanelProps> {
     this.columnsController.updateColumns((columns) => {
       const newColumns = [...columns];
 
-      newColumns.forEach((column, index) => {
-        const updatedColumn = { ...column };
+      newColumns.forEach((oldColumn, index) => {
+        const updatedColumn = { ...oldColumn };
 
-        if (column.name === movedColumn.name) {
+        if (oldColumn.name === column.name) {
           updatedColumn.visibleIndex = columnAfter.visibleIndex;
           updatedColumn.visible = true;
-        } else if (column.visibleIndex >= columnAfter.visibleIndex) {
-          updatedColumn.visibleIndex = column.visibleIndex + 1;
+        } else if (oldColumn.visibleIndex >= columnAfter.visibleIndex) {
+          updatedColumn.visibleIndex = oldColumn.visibleIndex + 1;
         }
 
         newColumns[index] = updatedColumn;

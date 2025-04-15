@@ -3,41 +3,49 @@ import type * as SortableTypes from '@js/ui/sortable_types';
 import type { ComponentType, InfernoNode } from 'inferno';
 import { Component, render } from 'inferno';
 
-import type { Column } from '../../grid_core/columns_controller/types';
+import type { Column, VisibleColumn } from '../../grid_core/columns_controller/types';
 import type { Props as SortableProps } from '../../grid_core/inferno_wrappers/sortable';
 import { Sortable } from '../../grid_core/inferno_wrappers/sortable';
 
 export type Status = 'forbid' | 'show' | 'moving' | 'none';
 
-export type Source = 'header-panel-main' | 'column-chooser';
+export type ColumnSortableArea = 'header-panel-main' | 'column-chooser';
+
+export interface DraggingColumnData {
+  column: Column;
+  status: Status;
+  source: ColumnSortableArea;
+  destination: ColumnSortableArea;
+  columnBefore: Column | undefined;
+  columnAfter: Column | undefined;
+}
 
 export interface Props extends Omit<SortableProps, 'onAdd' | 'onReorder' | 'dragTemplate'> {
-  source: Source;
+  source: ColumnSortableArea;
 
-  visibleColumns: Column[];
+  // sortableColumns: Column[];
 
-  allowColumnReordering: boolean;
+  getColumnByIndex: (index: number) => Column;
+
+  visibleColumns: VisibleColumn[];
+
+  allowDragging: boolean;
 
   columnChooserDragModeOpened?: boolean;
 
-  onMove: (column: Column, toIndex: number, source: Source) => void;
+  onColumnMove: (column: Column, toIndex: number, draggingData: DraggingColumnData) => void;
 
-  dragTemplate?: ComponentType<{ column: Column; status?: Status }>;
+  columnDragTemplate?: ComponentType<{ column: Column; status?: Status }>;
 }
 
-interface ItemData {
-  column: Column;
-  status: Status;
-  source: Source;
-}
-
-const ALLOWED_DRAGGING_DISTANCE = 64;
+const ALLOWED_DRAGGING_DISTANCE = 20;
 
 export class ColumnSortable extends Component<Props> {
   private dragItemContainer?: Element;
 
   private readonly onDragStart = (e: SortableTypes.DragStartEvent): void => {
-    const column = this.props.visibleColumns[e.fromIndex];
+    const column = this.props.getColumnByIndex(e.fromIndex);
+    const { source } = this.props;
     const isDraggable = this.isColumnDraggable(column);
 
     if (!isDraggable) {
@@ -48,42 +56,48 @@ export class ColumnSortable extends Component<Props> {
     e.itemData = {
       column,
       status: 'moving',
-      source: this.props.source,
-    } as ItemData;
+      source,
+      destination: source,
+    } as DraggingColumnData;
+
+    e.itemData = {
+      ...e.itemData,
+      ...this.getNeighborColumns(e),
+    };
   };
 
   private readonly onDragMove = (e: SortableTypes.DragMoveEvent): void => {
-    e.itemData.status = this.getDraggableStatus(e);
+    // @ts-expect-error
+    const destination = e.toComponent.option('_source') as ColumnSortableArea;
+    const { columnBefore, columnAfter } = this.getNeighborColumns(e);
+
+    e.itemData.columnBefore = columnBefore;
+    e.itemData.columnAfter = columnAfter;
+    e.itemData.destination = destination;
+    e.itemData.status = this.getDraggingStatus(e);
 
     this.renderDragTemplate(e.itemData);
   };
 
-  private readonly onDragChange = (e: SortableTypes.DragChangeEvent): void => {
-    if (e.itemData.status === 'forbid') {
-      e.cancel = true;
-    }
-  };
-
-  private readonly onMove = (e: SortableTypes.AddEvent | SortableTypes.ReorderEvent): void => {
+  private readonly onColumnMove = (
+    e: SortableTypes.AddEvent | SortableTypes.ReorderEvent,
+  ): void => {
     if (e.itemData.status === 'forbid') {
       return;
     }
 
-    this.props.onMove(
-      e.itemData.column,
-      e.toIndex,
-      e.itemData.source,
-    );
+    this.props.onColumnMove(e.itemData.column, e.toIndex, e.itemData);
   };
 
   // TODO: move all none-native approaches to sortable wrapper
-  private readonly renderDragTemplate = (itemData: ItemData): void => {
+  private readonly renderDragTemplate = (itemData: DraggingColumnData): void => {
     if (!itemData || !this.dragItemContainer) {
       return;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const DragTemplate = this.props.dragTemplate!;
+    const DragTemplate = this.props.columnDragTemplate!;
+
     render(
         <DragTemplate
           column={itemData.column}
@@ -96,21 +110,23 @@ export class ColumnSortable extends Component<Props> {
   render(): InfernoNode {
     const {
       source,
-      visibleColumns,
-      dragTemplate,
-      dropFeedbackMode,
-      allowColumnReordering,
+      // sortableColumns: columns,
+      getColumnByIndex,
+      allowDragging,
       columnChooserDragModeOpened,
+      onColumnMove,
+      columnDragTemplate,
+      dropFeedbackMode,
       ...restProps
     } = this.props;
 
-    const needSortable = allowColumnReordering || columnChooserDragModeOpened;
+    const needSortable = allowDragging || columnChooserDragModeOpened;
 
     if (!needSortable) {
       return this.props.children;
     }
 
-    const sortableDragTemplate = dragTemplate ? (e, container): void => {
+    const dragTemplate = columnDragTemplate ? (e, container): void => {
       this.dragItemContainer = $(container).get(0);
 
       this.renderDragTemplate(e.itemData);
@@ -122,11 +138,10 @@ export class ColumnSortable extends Component<Props> {
         dropFeedbackMode={dropFeedbackMode ?? 'indicate'}
         onDragStart={this.onDragStart}
         group='dx-cardview-columns'
-        onAdd={this.onMove}
-        onReorder={this.onMove}
+        onAdd={this.onColumnMove}
+        onReorder={this.onColumnMove}
         onDragMove={this.onDragMove}
-        onDragChange={this.onDragChange}
-        dragTemplate={sortableDragTemplate}
+        dragTemplate={dragTemplate}
         // @ts-expect-error
         _source={source}
       >
@@ -149,13 +164,12 @@ export class ColumnSortable extends Component<Props> {
     return false;
   }
 
-  private getDraggableStatus(e: SortableTypes.DragMoveEvent): Status {
-    const { column } = e.itemData as { column: Column };
-
-    // @ts-expect-error
-    const source = e.fromComponent.option('_source') as Source;
-    // @ts-expect-error
-    const destination = e.toComponent.option('_source') as Source;
+  private getDraggingStatus(e: SortableTypes.DragMoveEvent): Status {
+    const {
+      column,
+      source, destination,
+      columnBefore, columnAfter,
+    } = e.itemData as DraggingColumnData;
 
     const containerRect = $(e.element).get(0).getBoundingClientRect();
     // @ts-expect-error
@@ -180,21 +194,59 @@ export class ColumnSortable extends Component<Props> {
       return column.allowHiding ? 'moving' : 'forbid';
     }
 
-    if (destination === 'header-panel-main') {
-      const canReorder = column.allowReordering;
+    if (source === 'header-panel-main' && destination === 'header-panel-main') {
       const isDragCloseEnough = yDistance <= ALLOWED_DRAGGING_DISTANCE;
+      const canReorder = column.allowReordering;
+      const canInsert = !!columnBefore?.allowReordering || !!columnAfter?.allowReordering;
 
-      const isMoving = isDragCloseEnough && canReorder;
+      const isMoving = isDragCloseEnough && canInsert && canReorder;
 
       return isMoving ? 'moving' : 'forbid';
     }
 
-    if (destination === 'column-chooser') {
+    if (source === 'column-chooser' && destination === 'column-chooser') {
       const isMoving = isMouseOnSourceContainer;
 
       return isMoving ? 'moving' : 'forbid';
     }
 
     return 'forbid';
+  }
+
+  private getNeighborColumns(
+    e: SortableTypes.DragStartEvent | SortableTypes.DragMoveEvent,
+  ): { columnBefore: Column | undefined; columnAfter: Column | undefined } {
+    const { source, destination } = e.itemData as DraggingColumnData;
+
+    if (destination !== 'header-panel-main') {
+      return { columnBefore: undefined, columnAfter: undefined };
+    }
+
+    const column = e.itemData.column as VisibleColumn;
+    const toIndex = (e as SortableTypes.DragMoveEvent).toIndex ?? column.headerPanelIndex;
+    const { visibleColumns } = this.props;
+
+    if (source === 'header-panel-main') {
+      const isMovingLeft = toIndex < column.headerPanelIndex;
+
+      return isMovingLeft
+        ? {
+          columnBefore: visibleColumns[toIndex - 1],
+          columnAfter: visibleColumns[toIndex],
+        }
+        : {
+          columnBefore: visibleColumns[toIndex],
+          columnAfter: visibleColumns[toIndex + 1],
+        };
+    }
+
+    if (source === 'column-chooser') {
+      return {
+        columnBefore: visibleColumns[toIndex - 1],
+        columnAfter: visibleColumns[toIndex],
+      };
+    }
+
+    return { columnBefore: undefined, columnAfter: undefined };
   }
 }

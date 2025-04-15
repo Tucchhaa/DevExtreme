@@ -22,7 +22,7 @@ export class ColumnsController {
 
   public readonly columns: SubsGets<Column[]>;
 
-  public readonly visibleColumns: SubsGets<Column[]>;
+  public readonly visibleColumns: SubsGets<VisibleColumn[]>;
 
   public readonly nonVisibleColumns: SubsGets<Column[]>;
 
@@ -60,8 +60,9 @@ export class ColumnsController {
 
     this.visibleColumns = computed(
       (columns) => columns
-        .filter((column): column is VisibleColumn => column.visible)
-        .sort((a, b) => a.visibleIndex - b.visibleIndex),
+        .filter((column) => column.visible)
+        .sort((a, b) => a.visibleIndex - b.visibleIndex)
+        .map((column, index) => ({ ...column, headerPanelIndex: index } as VisibleColumn)),
       [this.columns],
     );
 
