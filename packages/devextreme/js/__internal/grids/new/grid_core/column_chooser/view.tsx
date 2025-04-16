@@ -1,8 +1,9 @@
 /* eslint-disable spellcheck/spell-checker */
 import type { ColumnChooserMode } from '@js/common/grids';
 import type { Properties as ButtonProperties } from '@js/ui/button';
-import type { Properties as PopupProperties } from '@js/ui/popup';
+import type { Properties as PopupProperties, ToolbarItem } from '@js/ui/popup';
 import type dxPopup from '@js/ui/popup';
+import { current, isGeneric, isMaterial } from '@js/ui/themes';
 import type { Properties as TreeViewProperties } from '@js/ui/tree_view';
 import type dxTreeView from '@js/ui/tree_view';
 import type { MapMaybeSubscribable, SubsGets } from '@ts/core/reactive/index';
@@ -93,6 +94,8 @@ export class ColumnChooserView extends View<ColumnChooserProps> {
       title: this.options.oneWay('columnChooser.title'),
       chooserColumns: this.columnChooserController.chooserColumns,
       visibleColumns: this.columnsController.visibleColumns,
+      // TODO: band columns aren't yet implemented in cardview
+      isBandColumnsUsed: false,
 
       onColumnMove: this.columnChooserController.onColumnMove,
 
@@ -100,16 +103,14 @@ export class ColumnChooserView extends View<ColumnChooserProps> {
         width: this.options.oneWay('columnChooser.width'),
         height: this.options.oneWay('columnChooser.height'),
         container: this.options.oneWay('columnChooser.container'),
-        rtlEnabled: this.options.oneWay('rtlEnabled'),
-
         position: this.options.oneWay('columnChooser.position'),
+        toolbarItems: this.getPopupToolbarItems(),
+        showCloseButton: this.isMaterialOrGeneric(),
 
         onHidden: () => { this.popupVisible.update(false); },
       } as MapMaybeSubscribable<PopupProperties>),
 
       treeViewConfig: combined({
-        rtlEnabled: this.options.oneWay('rtlEnabled'),
-
         searchEditorOptions: this.options.oneWay('columnChooser.search.editorOptions'),
         searchEnabled: this.options.oneWay('columnChooser.search.enabled'),
         searchTimeout: this.options.oneWay('columnChooser.search.timeout'),
@@ -139,7 +140,28 @@ export class ColumnChooserView extends View<ColumnChooserProps> {
     return combined({
       noDataText: this.options.oneWay('columnChooser.emptyPanelText'),
       activeStateEnabled: false,
-      hoverStateEnabled: false,
     });
+  }
+
+  private getPopupToolbarItems(): SubsGets<ToolbarItem[]> {
+    return computed(
+      (title) => {
+        const items = [
+          { text: title, toolbar: 'top', location: this.isMaterialOrGeneric() ? 'before' : 'center' },
+        ] as ToolbarItem[];
+
+        if (!this.isMaterialOrGeneric()) {
+          // @ts-expect-error
+          items.push({ shortcut: 'cancel' });
+        }
+
+        return items;
+      },
+      [this.options.oneWay('columnChooser.title')],
+    );
+  }
+
+  private isMaterialOrGeneric(): boolean {
+    return isMaterial(current()) || isGeneric(current());
   }
 }

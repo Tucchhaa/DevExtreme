@@ -2,14 +2,13 @@ import type { ColumnChooserMode } from '@js/common/grids';
 import $ from '@js/core/renderer';
 import messageLocalization from '@js/localization/message';
 import type {
-  Properties as PopupProperties, ShowingEvent, ToolbarItem,
+  Properties as PopupProperties, ShowingEvent,
 } from '@js/ui/popup';
 import type dxPopup from '@js/ui/popup';
-import { current, isGeneric, isMaterial } from '@js/ui/themes';
 import type { Properties as TreeViewProperties } from '@js/ui/tree_view';
 import type dxTreeView from '@js/ui/tree_view';
 import {
-  Component, type RefObject, render,
+  Component, type RefObject,
 } from 'inferno';
 
 import { ColumnSortable } from '../../card_view/header_panel/column_sortable';
@@ -25,7 +24,9 @@ export const CLASS = {
   plain: 'column-chooser-plain',
   dragMode: 'column-chooser-mode-drag',
   selectMode: 'column-chooser-mode-select',
-  item: 'dx-column-chooser-item',
+
+  treeviewItem: 'dx-treeview-item',
+  treeviewExpanderIcon: 'dx-treeview-expander-icon-stub',
   hidden: 'dx-hidden',
 };
 
@@ -43,6 +44,8 @@ export interface ColumnChooserProps {
   chooserColumns: Column[];
 
   visibleColumns: VisibleColumn[];
+
+  isBandColumnsUsed: boolean;
 
   onColumnMove: (column: Column) => void;
 
@@ -75,14 +78,13 @@ export class ColumnChooser extends Component<ColumnChooserProps> {
         // @ts-expect-error
         _loopFocus={true}
 
-        showCloseButton={this.isMaterialOrGeneric()}
-        toolbarItems={this.getPopupToolbarItems()}
+        showCloseButton={popupConfig.showCloseButton}
+        toolbarItems={popupConfig.toolbarItems}
         wrapperAttr={{ class: this.getPopupWrapperClass() }}
 
         width={popupConfig.width}
         height={popupConfig.height}
         container={popupConfig.container}
-        rtlEnabled={popupConfig.rtlEnabled}
         position={popupConfig.position}
         onHidden={popupConfig.onHidden}
         onShowing={this.onShowing}
@@ -90,7 +92,7 @@ export class ColumnChooser extends Component<ColumnChooserProps> {
         <ColumnSortable
           height='100%'
           source='column-chooser'
-          filter={`.${CLASS.item}.dx-cardview-header-item`}
+          filter={`.${CLASS.treeviewItem}`}
           getColumnByIndex={this.getColumnByIndex}
           visibleColumns={this.props.visibleColumns}
           allowDragging={!this.isSelectMode()}
@@ -105,10 +107,6 @@ export class ColumnChooser extends Component<ColumnChooserProps> {
     );
   }
 
-  private isMaterialOrGeneric(): boolean {
-    return isMaterial(current()) || isGeneric(current());
-  }
-
   private isSelectMode(): boolean {
     return this.props.mode === 'select';
   }
@@ -116,23 +114,6 @@ export class ColumnChooser extends Component<ColumnChooserProps> {
   // TODO: move it to the other place
   private addWidgetPrefix(cssClass: string): string {
     return `dx-cardview-${cssClass}`;
-  }
-
-  private getPopupToolbarItems(): ToolbarItem[] {
-    const items: ToolbarItem[] = [
-      {
-        text: this.props.title,
-        toolbar: 'top',
-        location: this.isMaterialOrGeneric() ? 'before' : 'center',
-      },
-    ];
-
-    if (!this.isMaterialOrGeneric()) {
-      // @ts-expect-error
-      items.push({ shortcut: 'cancel' });
-    }
-
-    return items;
   }
 
   private getPopupWrapperClass(): string {
@@ -160,10 +141,6 @@ export class ColumnChooser extends Component<ColumnChooserProps> {
   };
 
   private setPopupAttributes(popup: dxPopup): void {
-    // TODO: band columns aren't yet implemented in cardview
-    const isBandColumnsUsed = false;
-    const isPlain = this.isSelectMode() && !isBandColumnsUsed;
-
     // @ts-expect-error
     popup.setAria({
       label: messageLocalization.format('dxDataGrid-columnChooserTitle'),
@@ -173,7 +150,7 @@ export class ColumnChooser extends Component<ColumnChooserProps> {
     popup.$content().addClass(this.addWidgetPrefix(CLASS.list));
 
     // @ts-expect-error
-    popup.$content().toggleClass(this.addWidgetPrefix(CLASS.plain), isPlain);
+    popup.$content().toggleClass(this.addWidgetPrefix(CLASS.plain), !this.props.isBandColumnsUsed);
   }
 
   private getTreeView(): JSX.Element {
@@ -184,12 +161,6 @@ export class ColumnChooser extends Component<ColumnChooserProps> {
       treeViewDragAndDropModeConfig,
     } = this.props;
 
-    const itemTemplate = this.isSelectMode()
-      ? 'item'
-      : (item, index, $element): void => {
-        render(<Item column={item.column} cssClass={CLASS.item}></Item>, $($element).get(0));
-      };
-
     return (
       <TreeView
         componentRef={treeViewRef}
@@ -197,17 +168,14 @@ export class ColumnChooser extends Component<ColumnChooserProps> {
         activeStateEnabled={true}
         focusStateEnabled={true}
         hoverStateEnabled={true}
-        disabled={false}
         rootValue={null}
 
-        rtlEnabled={treeViewConfig.rtlEnabled}
         searchEditorOptions={treeViewConfig.searchEditorOptions}
         searchEnabled={treeViewConfig.searchEnabled}
         searchTimeout={treeViewConfig.searchTimeout}
         noDataText={treeViewConfig.noDataText}
 
         items={treeViewConfig.items}
-        itemTemplate={itemTemplate}
         {
           ...(
             this.isSelectMode()

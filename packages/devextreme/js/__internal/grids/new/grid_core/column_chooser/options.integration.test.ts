@@ -257,9 +257,9 @@ describe('Options', () => {
       const treeView = getTreeViewInstance();
 
       if (mode === 'select') {
-        expect(treeView.option('itemTemplate')).toEqual('item');
+        expect(['selectAll', 'normal']).toContain(treeView.option('showCheckBoxesMode'));
       } else {
-        expect(typeof treeView.option('itemTemplate')).toEqual('function');
+        expect(['none']).toContain(treeView.option('showCheckBoxesMode'));
       }
     });
 

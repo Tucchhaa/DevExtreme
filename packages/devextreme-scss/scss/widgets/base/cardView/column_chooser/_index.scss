@@ -12,3 +12,9 @@
     padding: 0 $cardview-column-chooser-horizontal-padding;
   }
 }
+
+.dx-cardview-column-chooser-plain {
+  .dx-treeview-expander-icon-stub {
+    display: none;
+  }
+}

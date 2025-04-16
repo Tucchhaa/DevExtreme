@@ -38,7 +38,7 @@ const expectColumnVisibility = (
 
 describe('ColumnChooser', () => {
   describe('Controller', () => {
-    describe('\'chooserColumns\' state', () => {
+    describe('chooserColumns', () => {
       const expectChooserColumns = (
         controller: ColumnChooserController,
         columnNames: string[],
@@ -143,7 +143,7 @@ describe('ColumnChooser', () => {
       );
     });
 
-    describe('\'items\' state', () => {
+    describe('items', () => {
       it.each<
         { mode: ColumnChooserMode }
       >([
@@ -248,7 +248,7 @@ describe('ColumnChooser', () => {
       expect(getFirstColumn().visible).toBeFalsy();
     });
 
-    describe('\'select\' mode', () => {
+    describe('select mode', () => {
       it('toggles column visibility on select/unselect', () => {
         const { columnsController, treeView } = setup({
           columns: ['Column 1', 'Column 2', 'Column 3', 'Column 4'],

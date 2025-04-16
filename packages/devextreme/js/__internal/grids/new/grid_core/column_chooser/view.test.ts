@@ -168,25 +168,6 @@ describe('ColumnChooser', () => {
         expect(overlayElement?.classList).toContain(CLASS.root);
         expect(overlayElement?.classList).toContain(CLASS.dragMode);
       });
-
-      it('treeview items has correct css classes', () => {
-        const { columnChooserView } = renderColumnChooser({
-          columns: [
-            { dataField: 'Column 1', visible: false },
-            { dataField: 'Column 2', visible: false },
-            { dataField: 'Column 3' },
-          ],
-          columnChooser: {
-            enabled: true,
-            mode: 'dragAndDrop',
-          },
-        });
-
-        const treeView = columnChooserView.treeViewRef.current;
-        const itemElements = treeView?.$element().find(`.${CLASS.treeViewItem} > .${CLASS.item}`);
-
-        expect(itemElements?.length).toEqual(2);
-      });
     });
   });
 });

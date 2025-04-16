@@ -23,8 +23,6 @@ export interface DraggingColumnData {
 export interface Props extends Omit<SortableProps, 'onAdd' | 'onReorder' | 'dragTemplate'> {
   source: ColumnSortableArea;
 
-  // sortableColumns: Column[];
-
   getColumnByIndex: (index: number) => Column;
 
   visibleColumns: VisibleColumn[];
@@ -35,7 +33,7 @@ export interface Props extends Omit<SortableProps, 'onAdd' | 'onReorder' | 'drag
 
   onColumnMove: (column: Column, toIndex: number, draggingData: DraggingColumnData) => void;
 
-  columnDragTemplate?: ComponentType<{ column: Column; status?: Status }>;
+  columnDragTemplate?: ComponentType<{ column: Column; status?: Status; isDragging?: boolean }>;
 }
 
 const ALLOWED_DRAGGING_DISTANCE = 20;
@@ -102,6 +100,7 @@ export class ColumnSortable extends Component<Props> {
         <DragTemplate
           column={itemData.column}
           status={itemData.status}
+          isDragging={true}
         />,
         this.dragItemContainer,
     );
@@ -110,7 +109,6 @@ export class ColumnSortable extends Component<Props> {
   render(): InfernoNode {
     const {
       source,
-      // sortableColumns: columns,
       getColumnByIndex,
       allowDragging,
       columnChooserDragModeOpened,
