@@ -28,6 +28,7 @@ const CLASSES = {
 
   groupWithIcon: 'dx-scheduler-form-group-with-icon',
   icon: 'dx-scheduler-form-icon',
+  iconSizedGap: 'dx-scheduler-form-icon-sized-gap',
   defaultResourceIcon: 'dx-scheduler-default-resources-icon',
 
   mainGroup: 'dx-scheduler-form-main-group',
@@ -181,8 +182,12 @@ export class AppointmentForm {
 
     const items = [mainGroup, recurrenceGroup];
 
-    this.setStylingModeToEditors(mainGroup);
-    this.setStylingModeToEditors(recurrenceGroup);
+    const { showIcons } = this.scheduler.getEditingConfig().form;
+    const showMainGroupIcons = ['main', 'both'].includes(showIcons);
+    const showRecurrenceGroupIcons = ['recurrence', 'both'].includes(showIcons);
+
+    this.setStylingModeToEditors(mainGroup, showMainGroupIcons);
+    this.setStylingModeToEditors(recurrenceGroup, showRecurrenceGroupIcons);
 
     this.createForm(items);
 
@@ -614,57 +619,95 @@ export class AppointmentForm {
     } as GroupItem;
   }
 
-  private createResourcesGroup(): GroupItem | undefined {
+  private createResourcesGroup(): GroupItem {
     const resourcesLoaders: ResourceLoader[] = Object.values(this.scheduler.getResourceById());
 
-    const resourcesItems = resourcesLoaders.map((resourceLoader) => {
+    let resourcesItems: FormItem[] = resourcesLoaders.map((resourceLoader) => {
       const { dataSource, dataAccessor } = resourceLoader;
       const dataField = resourceLoader.resourceIndex;
       const label = resourceLoader.resourceName ?? dataField;
       const editorType = resourceLoader.allowMultiple ? 'dxTagBox' : 'dxSelectBox';
 
       return {
+        itemType: 'simple',
+        dataField,
+        label: { text: label },
+        colSpan: 1,
+        editorType,
+        editorOptions: {
+          dataSource,
+          displayExpr: dataAccessor.textExpr,
+          valueExpr: dataAccessor.idExpr,
+        },
+      } as SimpleItem;
+    });
+
+    const noCustomResourceIcons = resourcesLoaders.every((resource) => !resource.icon);
+
+    if (noCustomResourceIcons) {
+      return {
         itemType: 'group',
+        visible: resourcesItems.length > 0,
+        colCount: 2,
+        colCountByScreen: {
+          xs: 2,
+        },
+        cssClass: `${CLASSES.resourcesGroup} ${CLASSES.groupWithIcon}`,
         items: [
           {
-            itemType: 'simple',
-            dataField,
-            label: { text: label },
-            editorType,
-            editorOptions: {
-              dataSource,
-              displayExpr: dataAccessor.textExpr,
-              valueExpr: dataAccessor.idExpr,
-            },
+            colSpan: 1,
+            cssClass: `${CLASSES.icon} ${CLASSES.defaultResourceIcon}`,
+            template: this.createIconTemplate('addcircleoutline'),
           },
+          {
+            itemType: 'group',
+            colSpan: 1,
+            items: resourcesItems,
+          },
+        ],
+      } as GroupItem;
+    }
+
+    resourcesItems = resourcesItems.map((item, index) => {
+      const icon = resourcesLoaders[index].icon ?? '';
+
+      return {
+        itemType: 'group',
+        colCount: 2,
+        colCountByScreen: {
+          xs: 2,
+        },
+        cssClass: CLASSES.groupWithIcon,
+        items: [
+          {
+            colSpan: 1,
+            cssClass: CLASSES.icon,
+            template: this.createIconTemplate(icon),
+          },
+          item,
         ],
       } as GroupItem;
     });
 
     return {
       itemType: 'group',
-      visible: resourcesItems.length > 0,
-      colCount: 2,
+      colCount: 1,
       colCountByScreen: {
-        xs: 2,
+        xs: 1,
       },
-      cssClass: `${CLASSES.resourcesGroup} ${CLASSES.groupWithIcon}`,
-      items: [
-        {
-          colSpan: 1,
-          cssClass: `${CLASSES.icon} ${CLASSES.defaultResourceIcon}`,
-          template: this.createIconTemplate('user'), // TODO: change icon to 'addcircleoutline'
-        },
-        {
-          itemType: 'group',
-          colSpan: 1,
-          items: resourcesItems,
-        },
-      ],
+      cssClass: CLASSES.resourcesGroup,
+      items: resourcesItems,
     } as GroupItem;
   }
 
-  private setStylingModeToEditors(item: FormItem): void {
+  private setStylingModeToEditors(item: FormItem, showIcons: boolean): void {
+    const isIconItem = item.cssClass?.includes(CLASSES.icon);
+
+    if (isIconItem) {
+      item.cssClass += showIcons ? '' : ' dx-hidden';
+      return;
+    }
+
     if (item.itemType === 'simple') {
       const simpleItem = item as SimpleItem;
       const stylingMode = isFluent(current()) ? 'filled' : undefined;
@@ -678,9 +721,8 @@ export class AppointmentForm {
 
     if (item.itemType === 'group') {
       const groupItem = item as GroupItem;
-
       groupItem.items?.forEach((child) => {
-        this.setStylingModeToEditors(child);
+        this.setStylingModeToEditors(child, showIcons);
       });
     }
   }
@@ -888,6 +930,10 @@ export class AppointmentForm {
   }
 
   private createIconTemplate(iconName: string): () => void {
+    if (iconName.length === 0) {
+      return (): dxElementWrapper => $('<div>').addClass(CLASSES.iconSizedGap);
+    }
+
     return (): dxElementWrapper => $('<i>').addClass('dx-icon').addClass(`dx-icon-${iconName}`);
   }
 }
