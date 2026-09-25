@@ -1,6 +1,4 @@
 /* tslint:disable:max-line-length */
-
-
 import {
     Component,
     OnInit,
@@ -10,10 +8,6 @@ import {
     SkipSelf,
     Input
 } from '@angular/core';
-
-
-
-
 import type { HeaderFilterSearchConfig, HeaderFilterTexts } from 'devextreme/common/grids';
 
 import {
@@ -21,7 +15,6 @@ import {
     NestedOptionHost,
 } from 'devextreme-angular/core';
 import { NestedOption } from 'devextreme-angular/core';
-
 
 @Component({
     selector: 'dxo-data-grid-data-grid-header-filter',
@@ -56,14 +49,6 @@ export class DxoDataGridDataGridHeaderFilterComponent extends NestedOption imple
     }
 
     @Input()
-    get searchTimeout(): number {
-        return this._getOption('searchTimeout');
-    }
-    set searchTimeout(value: number) {
-        this._setOption('searchTimeout', value);
-    }
-
-    @Input()
     get texts(): HeaderFilterTexts {
         return this._getOption('texts');
     }
@@ -92,7 +77,6 @@ export class DxoDataGridDataGridHeaderFilterComponent extends NestedOption imple
         return 'headerFilter';
     }
 
-
     constructor(@SkipSelf() @Host() parentOptionHost: NestedOptionHost,
             @Host() optionHost: NestedOptionHost) {
         super();
@@ -108,7 +92,6 @@ export class DxoDataGridDataGridHeaderFilterComponent extends NestedOption imple
     ngOnDestroy() {
         this._addRemovedOption(this._getOptionPath());
     }
-
 
 }
 
